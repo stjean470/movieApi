@@ -1,6 +1,9 @@
 package com.movieflix.movieAPI.service;
 
 import com.movieflix.movieAPI.dto.MovieDTO;
+import com.movieflix.movieAPI.exceptions.EmptyFileException;
+import com.movieflix.movieAPI.exceptions.FileExistException;
+import com.movieflix.movieAPI.exceptions.MovieNotFoundException;
 import com.movieflix.movieAPI.models.Movie;
 import com.movieflix.movieAPI.repository.MovieRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +39,7 @@ public class MovieServiceImpl implements MovieService{
     public MovieDTO addMovie(MovieDTO movieDTO, MultipartFile file) throws IOException {
         //1. uploading the file
         if(Files.exists(Paths.get(path + File.separator + file.getOriginalFilename()))) {
-            throw new RuntimeException("File already exist! Please enter another file.");
+            throw new EmptyFileException("File already exist! Please enter another file.");
         }
         String uploadedFileName = fileService.uploadFile(path, file);
 
@@ -78,7 +81,7 @@ public class MovieServiceImpl implements MovieService{
     @Override
     public MovieDTO getMovie(Long movieId) {
         //1. Search for the movie if exist
-        Movie movie = movieRepository.findById(movieId).orElseThrow(() -> new RuntimeException("Movie not found!"));
+        Movie movie = movieRepository.findById(movieId).orElseThrow(() -> new MovieNotFoundException("Movie not found with id = " + movieId + "!"));
 
         //2. Generate URL
         String posterUrl = url + "/file/" + movie.getPoster();
@@ -126,7 +129,7 @@ public class MovieServiceImpl implements MovieService{
     @Override
     public MovieDTO updateMovie(Long movieId, MovieDTO movieDTO, MultipartFile file) throws IOException {
         //1. Check if movie exist with given movie ID.
-        Movie movie = movieRepository.findById(movieId).orElseThrow(() -> new RuntimeException("Movie not found!"));
+        Movie movie = movieRepository.findById(movieId).orElseThrow(() -> new MovieNotFoundException("Movie not found with id = " + movieId + "!"));
 
 
         //2. If file is null, do nothing
@@ -179,7 +182,7 @@ public class MovieServiceImpl implements MovieService{
     @Override
     public String deleteMovie(Long movieId) throws IOException{
         //1. check if movie exist
-        Movie movie = movieRepository.findById(movieId).orElseThrow(() -> new RuntimeException("Movie not found!"));
+        Movie movie = movieRepository.findById(movieId).orElseThrow(() -> new MovieNotFoundException("Movie not found with id = " + movieId + "!"));
 
         //2. delete file associated with object
         Files.deleteIfExists(Paths.get(path + File.separator + movie.getPoster()));
